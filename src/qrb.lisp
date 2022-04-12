@@ -49,7 +49,7 @@
       lst
       (%insert (car lst) (%insertion-sort (cdr lst) key) key)))
 
-;; TOOD be able to insert multiple rows
+;; TODO be able to insert multiple rows
 (defun insert (qrb row)
   (ringbuffer-push-po2 (queue qrb) row)
   (when (> (ringbuffer-count-stored (queue qrb)) (quorum qrb))
