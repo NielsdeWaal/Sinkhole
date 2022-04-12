@@ -29,6 +29,12 @@
 (defun make-memtable-row (timestamp value)
   (make-instance 'memtable-row :timestamp timestamp :value value))
 
+(defun memtable-row= (lhs rhs)
+  (and (= (timestamp lhs)
+          (timestamp rhs))
+       (= (value lhs)
+          (value rhs))))
+
 (defun make-memtable ()
   (make-instance 'memtable))
 
