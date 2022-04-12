@@ -16,11 +16,15 @@
     :accessor left)
    (right
     :initform nil
-    :accessor right)))
+    :accessor right)
+   (data
+    :initarg :data
+    :initform nil
+    :accessor interval-data)))
 
-(defun make-interval (start end)
+(defun make-interval (start end &optional data)
   (declare (type integer start end))
-  (make-instance 'interval :start start :end end :max end))
+  (make-instance 'interval :start start :end end :max end :data data))
 
 (defun interval< (lhs rhs)
   (declare (type interval lhs rhs))
@@ -36,7 +40,7 @@
     (with-accessors ((start start)
                      (end end))
         obj
-      (format stream "(~d - ~d)" start end))))
+      (format stream "(~d - ~d)~%" start end))))
 
 (defclass interval-tree ()
   ((root
@@ -103,20 +107,20 @@
   ;;   acc)
   )
 
-(defun test ()
-  (let ((tree (make-interval-tree)))
-    (interval-tree-insert tree (make-interval 5 10))
-    (interval-tree-insert tree (make-interval 15 25))
-    (interval-tree-insert tree (make-interval 1 12))
-    (interval-tree-insert tree (make-interval 8 16))
-    (interval-tree-insert tree (make-interval 14 20))
-    (interval-tree-insert tree (make-interval 18 21))
-    (interval-tree-insert tree (make-interval 2 8))
+;; (defun test ()
+;;   (let ((tree (make-interval-tree)))
+;;     (interval-tree-insert tree (make-interval 5 10))
+;;     (interval-tree-insert tree (make-interval 15 25))
+;;     (interval-tree-insert tree (make-interval 1 12))
+;;     (interval-tree-insert tree (make-interval 8 16))
+;;     (interval-tree-insert tree (make-interval 14 20))
+;;     (interval-tree-insert tree (make-interval 18 21))
+;;     (interval-tree-insert tree (make-interval 2 8))
 
-    (dump-interval-tree (root tree))
-    (format t "~%")
+;;     (dump-interval-tree (root tree))
+;;     (format t "~%")
 
-    (interval-tree-find-all tree (make-interval 8 10))))
+;;     (interval-tree-find-all tree (make-interval 8 10))))
 
 ;; (defmethod print-object ((obj interval-tree) stream)
 ;;   (print-unreadable-object (obj stream :type t)
