@@ -52,6 +52,9 @@
         (setf (prev-ts memtable) timestamp)
         (incf (val-count memtable)))))
 
+(defun memtable-seal (memtable)
+  (list (index memtable) (val-count memtable) (storage memtable)))
+
 (defmethod print-object ((obj memtable-row) stream)
   (print-unreadable-object (obj stream :type t)
     (with-accessors ((timestamp timestamp)
