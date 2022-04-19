@@ -20,6 +20,7 @@
     :accessor mask)))
 
 (defmethod initialize-instance :after ((buf ringbuffer) &rest args)
+  (declare (ignore args))
   (setf (mask buf) (1- (buffer-size buf))))
 
 (defun %full-p (buffer)

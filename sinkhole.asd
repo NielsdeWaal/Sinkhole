@@ -8,7 +8,8 @@
                 ((:file "main")
                  (:file "ringbuffer")
                  (:file "memtable")
-                 (:file "interval-tree"))))
+                 (:file "interval-tree")
+                 (:file "qrb"))))
   :description ""
   :in-order-to ((test-op (test-op "sinkhole/tests"))))
 
@@ -16,9 +17,13 @@
   :author ""
   :license ""
   :depends-on ("sinkhole"
-               "rove")
+               "fiveam")
   :components ((:module "tests"
                 :components
-                ((:file "main"))))
+                ((:file "main")
+                 (:file "ringbuffer")
+                 (:file "memtable")
+                 (:file "interval-tree")
+                 (:file "qrb"))))
   :description "Test system for sinkhole"
-  :perform (test-op (op c) (symbol-call :rove :run c)))
+  :perform (test-op (op c) (symbol-call :fiveam :run c)))
