@@ -55,6 +55,9 @@
 (defun memtable-seal (memtable)
   (list (index memtable) (val-count memtable) (storage memtable)))
 
+(defun memtable-fullp (memtable)
+  (>= (val-count memtable) 256))
+
 (defmethod print-object ((obj memtable-row) stream)
   (print-unreadable-object (obj stream :type t)
     (with-accessors ((timestamp timestamp)
