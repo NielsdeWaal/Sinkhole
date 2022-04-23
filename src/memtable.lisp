@@ -16,7 +16,10 @@
    (prev-ts
     :initform 0
     :accessor prev-ts
-    :documentation "Previously stored timestamp")))
+    :documentation "Previously stored timestamp")
+   (prev-delta
+    :initform 0
+    :accessor prev-delta)))
 
 (defclass memtable-row ()
   ((timestamp
@@ -39,7 +42,7 @@
   (make-instance 'memtable))
 
 (defun memtable-insert (memtable timestamp value)
-  (if (= (val-count memtable) 0)
+  (if (null (storage memtable)) ;; (= (val-count memtable) 0)
       (progn
         (setf (index memtable) timestamp)
         (setf (storage memtable) (list (make-memtable-row 0 value)))
@@ -47,16 +50,34 @@
         (incf (val-count memtable)))
       (let* (;; (prev-delta (- timestamp (prev-ts memtable)))
              (ts-delta (- timestamp (prev-ts memtable)))
-             (delta-of-delta (- ts-delta (timestamp (car (last (storage memtable)))))))
+             (delta-of-delta (- ts-delta (prev-delta memtable) ;; (timestamp (car (last (storage memtable))))
+                                )))
         (setf (storage memtable) (append (storage memtable) (list (make-memtable-row delta-of-delta value))))
         (setf (prev-ts memtable) timestamp)
+        (setf (prev-delta memtable) ts-delta)
         (incf (val-count memtable)))))
+
+;; TODO extract dod encoder and decoder - for testability
+(defun memtable-decode (sealed-table)
+  (let ((new-table (make-memtable))
+        (prev-ts (first sealed-table))
+        (prev-delta 0))
+    (format t "Decoding sealed table:~% start ts: ~w, count: ~d~%" prev-ts (second sealed-table))
+    (setf (index new-table) (first sealed-table))
+    (setf (val-count new-table) (second sealed-table))
+    (mapc #'(lambda (x)
+              (incf prev-delta (timestamp x))
+              (incf prev-ts prev-delta)
+              (format t "decoded row to: ~d -> ~d~%" prev-ts (value x))
+              (memtable-insert new-table prev-ts (value x)))
+          (third sealed-table))
+    new-table))
 
 (defun memtable-seal (memtable)
   (list (index memtable) (val-count memtable) (storage memtable)))
 
-(defun memtable-fullp (memtable)
-  (>= (val-count memtable) 256))
+(defun memtable-fullp (memtable &key (limit 256))
+  (>= (val-count memtable) limit))
 
 (defmethod print-object ((obj memtable-row) stream)
   (print-unreadable-object (obj stream :type t)

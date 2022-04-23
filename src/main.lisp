@@ -19,24 +19,34 @@
    (memtable-tree
     :initform (make-interval-tree)
     :accessor memtable-tree
-    :documentation "Storing pointers to memtables with the stored interval. TODO later to be used for storing offsets into raw storage")))
+    :documentation "Storing pointers to memtables with the stored interval. TODO later to be used for storing offsets into raw storage")
+   (sealing-limit
+    :initform nil
+    :initarg :sealing-limit
+    :accessor sealing-limit
+    :documentation "Limit for memtables. Determines how many values they hold before considered full")))
 
-(defun make-sinkhole ()
-  (make-instance 'sinkhole))
+(defun make-sinkhole (&key sealing-limit)
+  (make-instance 'sinkhole :sealing-limit sealing-limit))
 
 (defun sinkhole-insert (sinkhole timestamp value)
   (with-accessors ((table memtable-queue)
                    (quantum qrb)) sinkhole
-    (let ((flushable (insert quantum (make-row timestamp value))))
+    (let ((flushable (insert quantum (make-memtable-row timestamp value))))
       (when (not (null flushable))
-        (mapc #'(lambda (x) (memtable-insert (last table) (timestamp x) (value x)))
+        (mapc #'(lambda (x) (memtable-insert (first (last table)) (timestamp x) (value x)))
               flushable)
-        (when (memtable-fullp (last table))
+        (when (memtable-fullp (first (last table)) :limit (sealing-limit sinkhole))
           (interval-tree-insert (memtable-tree sinkhole)
-                                (make-interval (index (last table))
+                                (make-interval (index (first (last table)))
                                                timestamp
                                                (last table)))
           (setf table (append table (list (make-memtable)))))))))
 
+(defparameter database (make-sinkhole))
+
 (defun main ()
-  (format t "Hello World"))
+  (setf database (make-sinkhole :sealing-limit 10))
+  (let ((start-time 2000))
+    (dotimes (i 40)
+      (sinkhole-insert database (+ start-time i) (random 100)))))
