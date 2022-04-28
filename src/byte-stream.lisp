@@ -53,6 +53,11 @@
         (setf (aref (slot-value stream 'data) (slot-value stream 'position)) byte)
         (incf (slot-value stream 'position)))))
 
+(defmacro with-output-to-buffer ((var &key (size 4096)) &body body)
+  `(let ((,var (make-byte-stream ,size)))
+     ,@body
+     (slot-value ,var 'buffer)))
+
 (defmethod stream-read-byte ((stream byte-stream))
   (handler-case
       (aref
