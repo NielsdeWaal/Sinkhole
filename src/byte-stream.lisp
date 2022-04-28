@@ -42,7 +42,7 @@
       eof-value))
 
 (defun make-byte-stream (size)
-  (make-instance 'byte-stream :data (make-array size) :size size))
+  (make-instance 'byte-stream :data (make-array size :element-type 'ub8) :size size))
 
 (defmethod stream-write-byte ((stream byte-stream) byte)
   (if (= (1+ (slot-value stream 'position)) (slot-value stream 'size))
@@ -56,7 +56,7 @@
 (defmacro with-output-to-buffer ((var &key (size 4096)) &body body)
   `(let ((,var (make-byte-stream ,size)))
      ,@body
-     (slot-value ,var 'buffer)))
+     (slot-value ,var 'data)))
 
 (defmethod stream-read-byte ((stream byte-stream))
   (handler-case
