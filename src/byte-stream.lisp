@@ -10,6 +10,7 @@
 (define-foreign-library malloc-wrapper
   ;; (:unix (merge-pathnames (uiop/os:getcwd) "c-interop/malloc-wrapper.so"))
   (:unix "/home/niels/Dev/LearningCommonLisp/sinkhole/src/c-interop/malloc-wrapper.so")
+  ;; (:unix (namestring (truename (make-pathname :name "malloc-wrapper.so" :directory '(:relative "c-interop")))))
   (t (:default "malloc-wrapper")))
 
 (use-foreign-library malloc-wrapper)
