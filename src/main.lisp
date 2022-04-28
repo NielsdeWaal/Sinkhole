@@ -33,14 +33,14 @@
   (with-accessors ((table memtable-queue)
                    (quantum qrb)) sinkhole
     (let ((flushable (insert quantum (make-memtable-row timestamp value))))
-      (when (not (null flushable))
+      (unless (null flushable)
         (mapc #'(lambda (x) (memtable-insert (first (last table)) (timestamp x) (value x)))
               flushable)
         (when (memtable-fullp (first (last table)) :limit (sealing-limit sinkhole))
           (interval-tree-insert (memtable-tree sinkhole)
                                 (make-interval (index (first (last table)))
-                                               timestamp
-                                               (last table)))
+                                               (prev-ts (first (last table)))
+                                               (first (last table))))
           (setf table (append table (list (make-memtable)))))))))
 
 (defparameter database (make-sinkhole))
@@ -48,5 +48,5 @@
 (defun main ()
   (setf database (make-sinkhole :sealing-limit 10))
   (let ((start-time 2000))
-    (dotimes (i 40)
+    (dotimes (i 100)
       (sinkhole-insert database (+ start-time i) (random 100)))))
