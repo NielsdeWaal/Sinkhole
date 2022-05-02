@@ -20,6 +20,8 @@
 
 (deftype ub8 () '(unsigned-byte 8))
 
+(declaim (inline encode-lsb decode-lsb))
+
 (defun get-lsb-byte (number byte)
   (declare (type integer number)
            (type (signed-byte 32) byte))
@@ -39,8 +41,6 @@
     (loop for x from 0 below bytes
           do (setf (aref result x) (get-lsb-byte number x)))
     result))
-
-(declaim (inline encode-lsb decode-lsb))
 
 (defclass byte-stream (fundamental-binary-stream)
   ((data
@@ -64,17 +64,26 @@
       (error 'end-of-file :stream stream)
       eof-value))
 
-(defun make-byte-stream (size)
-  (make-instance 'byte-stream :data (make-array size :element-type 'ub8) :size size))
+(defun make-byte-stream (size &optional (data nil))
+  (make-instance 'byte-stream :data (or data (make-array size :element-type 'ub8)) :size size))
 
 (defmethod stream-write-byte ((stream byte-stream) byte)
-  (if (= (1+ (slot-value stream 'position)) (slot-value stream 'size))
+  (if (= (slot-value stream 'position) (slot-value stream 'size))
       (progn
         ;; (setf (slot-value stream 'open-p) nil)
         (error 'end-of-file :stream stream))
       (progn
-        (setf (aref (slot-value stream 'data) (slot-value stream 'position)) byte)
+        (typecase (slot-value stream 'data)
+          (simple-array
+           (setf (aref (slot-value stream 'data) (slot-value stream 'position)) byte))
+          (sb-sys:system-area-pointer
+           (setf (mem-ref (slot-value stream 'data) :char (slot-value stream 'position)) byte)))
         (incf (slot-value stream 'position)))))
+
+(defun write-int (stream value))
+(defun write-long (stream value))
+
+(declaim (inline write-int write-long))
 
 (defmethod #+sbcl sb-gray:stream-write-sequence
   #-sbcl stream-write-sequence ((stream byte-stream) sequence #+sbcl &optional start end #-sbcl &key)
