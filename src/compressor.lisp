@@ -151,7 +151,15 @@ to be written after the timestamp.")))
              (header (get-dod-ts-header ts)))
         (make-instance 'compressed-row :timestamp ts :value value :ts-metadata-header header))))
 
-(defgeneric decompress (compressor)
+(defgeneric decompress-prep (compressor compressed-timestamp)
+  (:documentation "Possible prep work for decompressor. This might be needed for compressors where some
+metadata is stored which needs to be processed first before decompression can begin.
+This could be things like loading a table, or reconstructing values using metadata."))
+
+(defmethod decompress-prep ((compressor flat-compressor) compressed-timestamp)
+  compressed-timestamp)
+
+(defgeneric decompress (compressor timestamp value)
   (:documentation "Decompress timestamp and value from storage"))
 
 (defmethod decompress ((compressor flat-compressor) timestamp value)
