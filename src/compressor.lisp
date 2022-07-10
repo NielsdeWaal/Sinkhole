@@ -166,3 +166,36 @@ This could be things like loading a table, or reconstructing values using metada
   (list timestamp value))
 
 (defmethod decompress ((compressor delta-of-delta-compressor) timestamp value))
+;; TODO decompress over iterator
+;; TODO tests with random values
+;; TODO remove repeat safety protections
+(defun leb128u-compress (value)
+  (assert (plusp value))
+  (loop repeat 10
+        for byte = (logand value #x7F) then (logand i #x7F)
+        for i = (ash value -7) then (ash i -7)
+        while (/= i 0)
+        collect (logior #x80 byte) into res
+        finally (return (nconc res (list byte)))))
+
+(defun leb128u-decompress (byte-array)
+  (loop for byte in byte-array
+        for i from 0
+        sum (ash (logand byte #x7F) (* i 7))))
+
+(defun leb128i-compress (value)
+  (loop repeat 10
+        for byte = (logand value #x7F) then (logand i #x7F)
+        for i = (ash value -7) then (ash i -7)
+        until (or (and (zerop i) (zerop (logand byte #x40)))
+                  (and (= i -1) (/= (logand byte #x40) 0)))
+        collect (logior #x80 byte) into res
+        finally (return (nconc res (list byte)))))
+
+(defun leb128i-decompress (byte-array)
+  (loop for byte in byte-array
+        for i from 0
+        sum (ash (logand byte #x7F) (* i 7)) into res
+        finally (return (if (/= (logand byte #x40) 0)
+                            (logior res (- (ash 1 (+ (* i 7) 7))))
+                            res))))
