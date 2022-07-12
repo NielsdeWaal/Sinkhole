@@ -26,6 +26,10 @@
 ;; There is a chicken-egg problem where the compressor might have some extra requirements
 ;; for writing. This is the case for the DoD compressor, here there is supposed to be a marker
 ;; in front of the compressed ts value.
+;;
+;; Another problem is where metadata might contain information about how much data
+;; needs to be read. One solution here would be to have another generic function
+;; dictating how much to read and in what way.
 
 ;; Using a standard file format
 ;; List of key value pairs.
@@ -109,17 +113,13 @@ to be written after the timestamp.")))
     delta-of-delta)
   )
 
-(defun get-dod-ts-header (compressed-timestamp)
+(defun convert-ts-to-unsigned (compressed-timestamp)
   (cond
     ((<= -63 compressed-timestamp 64) #x2)
     ((<= -8388607 compressed-timestamp 8388608) #x6)
     ((<= -2147483647 compressed-timestamp 2147483648) #xE)
     (t #xF)
     ))
-
-;; (defun flat-compressor (blocksize)
-;;   (let ((capacity (/ blocksize 128)))
-;;     (make-instance 'flat-compressor :capacity capacity)))
 
 (defgeneric storage-write (storage-engine timestamp value)
   (:documentation "Write to backing storage"))
@@ -148,7 +148,7 @@ to be written after the timestamp.")))
         (setf (prev-ts compressor) timestamp)
         (make-instance 'compressed-row :timestamp timestamp :value value :ts-metadata-header #xF))
       (let* ((ts (get-dod-ts compressor timestamp))
-             (header (get-dod-ts-header ts)))
+             (header (convert-ts-to-unsigned ts)))
         (make-instance 'compressed-row :timestamp ts :value value :ts-metadata-header header))))
 
 (defgeneric decompress-prep (compressor compressed-timestamp)
@@ -159,15 +159,15 @@ This could be things like loading a table, or reconstructing values using metada
 (defmethod decompress-prep ((compressor flat-compressor) compressed-timestamp)
   compressed-timestamp)
 
-(defgeneric decompress (compressor timestamp value)
+(defgeneric decompress (compressor compressed-timestamp)
   (:documentation "Decompress timestamp and value from storage"))
 
-(defmethod decompress ((compressor flat-compressor) timestamp value)
-  (list timestamp value))
+(defmethod decompress ((compressor flat-compressor) compressed-timestamp)
+  (list (timestamp compressed-timestamp) (value compressed-timestamp)))
 
-(defmethod decompress ((compressor delta-of-delta-compressor) timestamp value))
+(defmethod decompress ((compressor delta-of-delta-compressor) compressed-timestamp))
+
 ;; TODO decompress over iterator
-;; TODO tests with random values
 ;; TODO remove repeat safety protections
 (defun leb128u-compress (value)
   (assert (plusp value))
@@ -183,6 +183,14 @@ This could be things like loading a table, or reconstructing values using metada
         for i from 0
         sum (ash (logand byte #x7F) (* i 7))))
 
+(defun leb128u-decompress-iterator (byte-array)
+  (loop for byte in byte-array
+        for i from 0
+        sum (ash (logand byte #x7F) (* i 7)) into res
+        when (= (logand byte #x80) 0)
+          do (loop-finish)
+        finally (return (values res (1+ i)))))
+
 (defun leb128i-compress (value)
   (loop repeat 10
         for byte = (logand value #x7F) then (logand i #x7F)
@@ -193,6 +201,14 @@ This could be things like loading a table, or reconstructing values using metada
         finally (return (nconc res (list byte)))))
 
 (defun leb128i-decompress (byte-array)
+  (loop for byte in byte-array
+        for i from 0
+        sum (ash (logand byte #x7F) (* i 7)) into res
+        finally (return (if (/= (logand byte #x40) 0)
+                            (logior res (- (ash 1 (+ (* i 7) 7))))
+                            res))))
+
+(defun leb128i-decompress-iterator (byte-array)
   (loop for byte in byte-array
         for i from 0
         sum (ash (logand byte #x7F) (* i 7)) into res

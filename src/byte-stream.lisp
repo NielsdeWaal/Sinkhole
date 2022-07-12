@@ -93,6 +93,9 @@
 
 (declaim (inline write-short write-long write-long-long))
 
+(defun space-left-bytes (stream)
+  (- (slot-value stream 'size) (slot-value stream 'position)))
+
 (defmethod #+sbcl sb-gray:stream-write-sequence
   #-sbcl stream-write-sequence ((stream byte-stream) sequence #+sbcl &optional start end #-sbcl &key)
   (loop for ix from start to (or end (1- (length sequence)))

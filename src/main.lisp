@@ -34,6 +34,8 @@
                    (quantum qrb)) sinkhole
     (let ((flushable (insert quantum (make-memtable-row timestamp value))))
       (unless (null flushable)
+        ;; TODO with new storage engine this will have to changed first to see if storage
+        ;; is full or not before writing to the memtable
         (mapc #'(lambda (x) (memtable-insert (first (last table)) (timestamp x) (value x)))
               flushable)
         (when (memtable-fullp (first (last table)) :limit (sealing-limit sinkhole))
