@@ -1,5 +1,3 @@
-;; (in-package :sinkhole)
-
 (in-package #:sinkhole/interval-tree)
 
 (defclass interval ()

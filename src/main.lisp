@@ -1,10 +1,3 @@
-;; (eval-when (:compile-toplevel :load-toplevel :execute)
-;;   (ql:quickload "cffi")
-;;   (ql:quickload "fiveam"))
-
-;; (require 'cffi)
-;; (defpackage sinkhole
-;;   (:use :cl :cffi))
 (in-package #:sinkhole)
 
 (defclass sinkhole ()

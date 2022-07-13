@@ -18,6 +18,12 @@
            ringbuffer-collect-po2
            ringbuffer-count-stored))
 
+(defpackage #:sinkhole/writer
+  (:use #:cl)
+  (:export writer
+           make-writer
+           write-to-buffer))
+
 (defpackage #:sinkhole/qrb
   (:use #:cl)
   (:export QRB

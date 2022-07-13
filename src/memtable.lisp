@@ -1,6 +1,3 @@
-;; (in-package :sinkhole)
-;; (require :sinkhole/byte-stream)
-
 (in-package #:sinkhole/memtable)
 
 (defclass memtable ()

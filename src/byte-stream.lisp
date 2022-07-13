@@ -1,7 +1,3 @@
-;; (defpackage :sinkhole/byte-stream
-;;   (:use :cl :cffi :trivial-gray-streams))
-;; (in-package :sinkhole/byte-stream)
-
 (in-package #:sinkhole/byte-stream)
 
 (eval-when (:compile-toplevel :load-toplevel :execute)

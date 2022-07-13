@@ -1,7 +1,3 @@
-;; (defpackage :sinkhole/compressor
-;;   (:use :cl))
-;; (in-package :sinkhole/compressor)
-
 ;; *Scratchpad*
 ;; compressor has the problem where we want to waste as little space as possible
 ;; This works fine for flat encoding as we simply fit KV pairs onto disk.

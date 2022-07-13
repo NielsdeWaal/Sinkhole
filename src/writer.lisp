@@ -1,6 +1,4 @@
-(defpackage :sinkhole/writer
-  (:use :cl))
-(in-package :sinkhole/writer)
+(in-package #:sinkhole/writer)
 
 ;;;; Writer to fill buffer and handle overflows
 ;;;; Buffers which are full can be flushed to disk.
