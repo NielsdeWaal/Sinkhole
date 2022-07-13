@@ -1,4 +1,4 @@
-(in-package :sinkhole)
+(in-package #:sinkhole/qrb)
 
 (defclass row ()
   ((timestamp
@@ -52,7 +52,7 @@
 ;; TODO be able to insert multiple rows
 (defun insert (qrb row)
   (ringbuffer-push-po2 (queue qrb) row)
-  (when (> (ringbuffer-count-stored (queue qrb)) (quorum qrb))
+  (when (> (sinkhole/ringbuffer:ringbuffer-count-stored (queue qrb)) (quorum qrb))
     (let* ((sorted (%insertion-sort
                     (ringbuffer-collect-po2 (queue qrb) (quorum qrb))
                     #'(lambda (&rest args) (< (timestamp (first args)) (timestamp (second args))))))

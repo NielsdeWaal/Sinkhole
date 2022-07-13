@@ -1,23 +1,23 @@
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (ql:quickload "cffi")
-  (ql:quickload "fiveam"))
+;; (eval-when (:compile-toplevel :load-toplevel :execute)
+;;   (ql:quickload "cffi")
+;;   (ql:quickload "fiveam"))
 
-(require 'cffi)
-(defpackage sinkhole
-  (:use :cl :cffi))
-(in-package :sinkhole)
+;; (require 'cffi)
+;; (defpackage sinkhole
+;;   (:use :cl :cffi))
+(in-package #:sinkhole)
 
 (defclass sinkhole ()
   ((qrb
-    :initform (make-qrb :quorum 32)
+    :initform (sinkhole/qrb:make-qrb :quorum 32)
     :accessor qrb
     :documentation "qrb for incoming datapoints")
    (memtable-queue
-    :initform (list (make-memtable))
+    :initform (list (sinkhole/memtable:make-memtable))
     :accessor memtable-queue
     :documentation "Queue of sealed memtables. TODO These need to be converted to raw data, for use with storage")
    (memtable-tree
-    :initform (make-interval-tree)
+    :initform (sinkhole/interval-tree:make-interval-tree)
     :accessor memtable-tree
     :documentation "Storing pointers to memtables with the stored interval. TODO later to be used for storing offsets into raw storage")
    (sealing-limit
@@ -32,17 +32,17 @@
 (defun sinkhole-insert (sinkhole timestamp value)
   (with-accessors ((table memtable-queue)
                    (quantum qrb)) sinkhole
-    (let ((flushable (insert quantum (make-memtable-row timestamp value))))
+    (let ((flushable (sinkhole/qrb:insert quantum (sinkhole/memtable:make-memtable-row timestamp value))))
       (unless (null flushable)
         ;; TODO with new storage engine this will have to changed first to see if storage
         ;; is full or not before writing to the memtable
-        (mapc #'(lambda (x) (memtable-insert (first (last table)) (timestamp x) (value x)))
+        (mapc #'(lambda (x) (sinkhole/memtable:memtable-insert (first (last table)) (sinkhole/memtable:timestamp x) (sinkhole/memtable:value x)))
               flushable)
-        (when (memtable-fullp (first (last table)) :limit (sealing-limit sinkhole))
-          (interval-tree-insert (memtable-tree sinkhole)
-                                (make-interval (index (first (last table)))
-                                               (prev-ts (first (last table)))
-                                               (first (last table))))
+        (when (sinkhole/memtable:memtable-fullp (first (last table)) :limit (sealing-limit sinkhole))
+          (sinkhole/interval-tree:interval-tree-insert (memtable-tree sinkhole)
+                                                       (sinkhole/interval-tree:make-interval (sinkhole/memtable:index (first (last table)))
+                                                                                             (sinkhole/memtable:prev-ts (first (last table)))
+                                                                                             (first (last table))))
           (setf table (append table (list (make-memtable)))))))))
 
 (defparameter database (make-sinkhole))

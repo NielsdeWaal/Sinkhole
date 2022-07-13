@@ -2,7 +2,7 @@
 (defpackage memtable-test
   (:use :cl
         :fiveam
-        :sinkhole))
+        #:sinkhole/memtable))
 (in-package :memtable-test)
 
 (defun generate-timestamps ()

@@ -2,7 +2,7 @@
 (defpackage qrb-test
   (:use :cl
         :fiveam
-        :sinkhole))
+        #:sinkhole))
 (in-package :qrb-test)
 
 (defun same-elements (lst1 lst2)
@@ -16,7 +16,7 @@
 
 (fiveam:def-suite* qrb-tests)
 (fiveam:test qrb-simple
-  (let ((qrb (sinkhole::make-qrb :quorum 4)))
+  (let ((qrb (sinkhole/qrb:make-qrb :quorum 4)))
     (is (= 4 (sinkhole::quorum qrb)))
     (is (= 16 (sinkhole::buffer-size (sinkhole::queue qrb))))
 
@@ -28,10 +28,10 @@
     (let ((flushable (sinkhole::insert qrb (sinkhole::make-row 1243 42))))
       (is (and flushable))
       (is (= 2 (length flushable)))))
-  (signals simple-error (sinkhole::make-qrb :quorum 3)))
+  (signals simple-error (sinkhole/qrb:make-qrb :quorum 3)))
 
 (fiveam:test qrb-sorting
-  (let ((qrb (sinkhole::make-qrb :quorum 4)))
+  (let ((qrb (sinkhole/qrb:make-qrb :quorum 4)))
     (sinkhole::insert qrb (sinkhole::make-row 1234 1))
     (sinkhole::insert qrb (sinkhole::make-row 1235 1))
     (sinkhole::insert qrb (sinkhole::make-row 1233 1))

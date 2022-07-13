@@ -1,6 +1,6 @@
-(defpackage :sinkhole/compressor
-  (:use :cl))
-(in-package :sinkhole/compressor)
+;; (defpackage :sinkhole/compressor
+;;   (:use :cl))
+;; (in-package :sinkhole/compressor)
 
 ;; *Scratchpad*
 ;; compressor has the problem where we want to waste as little space as possible
@@ -37,6 +37,8 @@
 ;; When using the flat compressor we simply write pairs of 64 bit integers.
 ;; DoD compressor also writes in pairs but captures the jitter
 ;; from the timestamps when writing. Lessening some of the overhead.
+
+(in-package #:sinkhole/compressor)
 
 (defclass storage-engine ()
   ((capacity

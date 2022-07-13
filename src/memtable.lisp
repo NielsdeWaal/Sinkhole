@@ -1,5 +1,7 @@
-(in-package :sinkhole)
-(require :sinkhole/byte-stream)
+;; (in-package :sinkhole)
+;; (require :sinkhole/byte-stream)
+
+(in-package #:sinkhole/memtable)
 
 (defclass memtable ()
   ((val-count
@@ -81,16 +83,16 @@
   (>= (val-count memtable) limit))
 
 (defun memtable-flush-to-byte-stream (memtable)
-  (let ((stream sinkhole/byte-stream::make-byte-stream))
+  (let ((stream (make-byte-stream 2048)))
     (print (list :writing-to-stream (val-count memtable)))
     (loop for pair in (storage memtable)
           do (with-accessors ((timestamp timestamp)
                               (value value))
                  pair
-               (sinkhole/byte-stream::write-sequence (coerce
-                                                      (nconc (sinkhole/compressor::leb128i-compress timestamp) (sinkhole/compressor::leb128u-compress value))
-                                                      'vector)
-                                                     stream)))
+               (write-sequence (coerce
+                                (nconc (leb128i-compress timestamp) (leb128u-compress value))
+                                'vector)
+                               stream)))
     stream))
 
 (defmethod print-object ((obj memtable-row) stream)

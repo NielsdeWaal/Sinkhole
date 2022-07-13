@@ -1,7 +1,9 @@
-(in-package :sinkhole)
+;; (in-package :sinkhole)
 
 ;; TODO conditions for when ring is full or empty
 ;; TODO overload pop with callback argument for popped value
+
+(in-package #:sinkhole/ringbuffer)
 
 (defclass ringbuffer ()
   ((buffer-size

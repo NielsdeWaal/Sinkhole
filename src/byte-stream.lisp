@@ -1,6 +1,8 @@
-(defpackage :sinkhole/byte-stream
-  (:use :cl :cffi :trivial-gray-streams))
-(in-package :sinkhole/byte-stream)
+;; (defpackage :sinkhole/byte-stream
+;;   (:use :cl :cffi :trivial-gray-streams))
+;; (in-package :sinkhole/byte-stream)
+
+(in-package #:sinkhole/byte-stream)
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (declaim (inline system-relative-namestring))
@@ -9,7 +11,8 @@
 
 (define-foreign-library malloc-wrapper
   ;; (:unix (merge-pathnames (uiop/os:getcwd) "c-interop/malloc-wrapper.so"))
-  (:unix "/home/niels/Dev/LearningCommonLisp/sinkhole/src/c-interop/malloc-wrapper.so")
+  ;; (:unix "/home/niels/Dev/LearningCommonLisp/sinkhole/src/c-interop/malloc-wrapper.so")
+  (:unix "/home/niels/common-lisp/sinkhole/src/c-interop/malloc-wrapper.so")
   ;; (:unix (namestring (truename (make-pathname :name "malloc-wrapper.so" :directory '(:relative "c-interop")))))
   (t (:default "malloc-wrapper")))
 
