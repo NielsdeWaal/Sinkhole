@@ -46,10 +46,12 @@
   (:use #:cl)
   (:export leb128u-compress
            leb128u-decompress
-           leb128u-decompress-iterator
+           leb128u-decompress-array
+           leb128u-decompress-stream
            leb128i-compress
            leb128i-decompress
-           leb128i-decompress-iterator))
+           leb128i-decompress-array
+           leb128i-decompress-stream))
 
 (defpackage #:sinkhole/memtable
   (:use #:cl)
@@ -67,14 +69,16 @@
            value)
   (:import-from #:sinkhole/byte-stream
                 make-byte-stream
-                write-sequence)
+                write-sequence
+                ;; data
+                )
   (:import-from #:sinkhole/compressor
                 leb128u-compress
                 leb128u-decompress
-                leb128u-decompress-iterator
+                leb128u-decompress-stream
                 leb128i-compress
                 leb128i-decompress
-                leb128i-decompress-iterator))
+                leb128i-decompress-stream))
 
 (defpackage #:sinkhole
   (:use #:cl)

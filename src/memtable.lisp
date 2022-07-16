@@ -10,7 +10,7 @@
     :accessor index
     :documentation "Starting timestamp of the memtable")
    (storage
-    :initform nil
+    :initform '()
     :accessor storage
     :documentation "Value stored")
    (prev-ts
@@ -41,23 +41,30 @@
 (defun make-memtable ()
   (make-instance 'memtable))
 
-(defun memtable-insert (memtable timestamp value)
-  (if (null (storage memtable)) ;; (= (val-count memtable) 0)
-      (progn
-        (setf (index memtable) timestamp)
-        (setf (storage memtable) (list (make-memtable-row 0 value)))
-        (setf (prev-ts memtable) timestamp)
-        (incf (val-count memtable)))
-      (let* (;; (prev-delta (- timestamp (prev-ts memtable)))
-             (ts-delta (- timestamp (prev-ts memtable)))
-             (delta-of-delta (- ts-delta (prev-delta memtable) ;; (timestamp (car (last (storage memtable))))
-                                )))
-        (setf (storage memtable) (append (storage memtable) (list (make-memtable-row delta-of-delta value))))
-        (setf (prev-ts memtable) timestamp)
-        (setf (prev-delta memtable) ts-delta)
-        (incf (val-count memtable)))))
+;; (defun memtable-insert (memtable timestamp value)
+;;   (if (null (storage memtable)) ;; (= (val-count memtable) 0)
+;;       (progn
+;;         (setf (index memtable) timestamp)
+;;         (setf (storage memtable) (list (make-memtable-row 0 value)))
+;;         (setf (prev-ts memtable) timestamp)
+;;         (incf (val-count memtable)))
+;;       (let* (;; (prev-delta (- timestamp (prev-ts memtable)))
+;;              (ts-delta (- timestamp (prev-ts memtable)))
+;;              (delta-of-delta (- ts-delta (prev-delta memtable) ;; (timestamp (car (last (storage memtable))))
+;;                                 )))
+;;         (setf (storage memtable) (append (storage memtable) (list (make-memtable-row delta-of-delta value))))
+;;         (setf (prev-ts memtable) timestamp)
+;;         (setf (prev-delta memtable) ts-delta)
+;;         (incf (val-count memtable)))))
 
-;; TODO extract dod encoder and decoder - for testability
+(defun memtable-insert (memtable timestamp value)
+  (declare (type memtable memtable))
+  (when (zerop (index memtable))
+    (setf (index memtable) timestamp))
+  (setf (storage memtable) (append (storage memtable) (list (make-memtable-row timestamp value))))
+  (incf (val-count memtable)))
+
+;;TODO extract dod encoder and decoder - for testability
 (defun memtable-decode (sealed-table)
   (let ((new-table (make-memtable))
         (prev-ts (first sealed-table))
@@ -80,8 +87,9 @@
   (>= (val-count memtable) limit))
 
 (defun memtable-flush-to-byte-stream (memtable)
-  (let ((stream (make-byte-stream 2048)))
+  (let ((stream (make-byte-stream 2048 (make-array 2048 :element-type 'unsigned-byte))))
     (print (list :writing-to-stream (val-count memtable)))
+    (write-sequence (coerce (leb128u-compress (val-count memtable)) 'vector) stream)
     (loop for pair in (storage memtable)
           do (with-accessors ((timestamp timestamp)
                               (value value))
@@ -91,6 +99,19 @@
                                 'vector)
                                stream)))
     stream))
+
+;; TODO to make this work the size of the table has to be written at the start
+;; otherwise there is no knowning where to stop, there could be 0 values stored in the table
+(defun memtable-load-from-byte-stream (buffer buffer-size)
+  (let* ((stream (make-byte-stream buffer-size buffer))
+         (new-memtable (make-memtable))
+         (nr-entries (values (leb128u-decompress-stream stream))))
+    (print (list :reading-from-stream nr-entries))
+    (loop repeat nr-entries
+          do (let ((timestamp (leb128i-decompress-stream stream))
+                   (value (leb128u-decompress-stream stream)))
+               (memtable-insert new-memtable timestamp value)))
+    new-memtable))
 
 (defmethod print-object ((obj memtable-row) stream)
   (print-unreadable-object (obj stream :type t)

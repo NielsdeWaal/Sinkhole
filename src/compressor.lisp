@@ -181,8 +181,16 @@ This could be things like loading a table, or reconstructing values using metada
         for i from 0
         sum (ash (logand byte #x7F) (* i 7))))
 
-(defun leb128u-decompress-iterator (byte-array)
+(defun leb128u-decompress-array (byte-array)
   (loop for byte in byte-array
+        for i from 0
+        sum (ash (logand byte #x7F) (* i 7)) into res
+        when (= (logand byte #x80) 0)
+          do (loop-finish)
+        finally (return (values res (1+ i)))))
+
+(defun leb128u-decompress-stream (stream)
+  (loop for byte = (read-byte stream)
         for i from 0
         sum (ash (logand byte #x7F) (* i 7)) into res
         when (= (logand byte #x80) 0)
@@ -206,10 +214,20 @@ This could be things like loading a table, or reconstructing values using metada
                             (logior res (- (ash 1 (+ (* i 7) 7))))
                             res))))
 
-(defun leb128i-decompress-iterator (byte-array)
+(defun leb128i-decompress-array (byte-array)
   (loop for byte in byte-array
         for i from 0
         sum (ash (logand byte #x7F) (* i 7)) into res
+        finally (return (if (/= (logand byte #x40) 0)
+                            (logior res (- (ash 1 (+ (* i 7) 7))))
+                            res))))
+
+(defun leb128i-decompress-stream (stream)
+  (loop for byte = (read-byte stream)
+        for i from 0
+        sum (ash (logand byte #x7F) (* i 7)) into res
+        when (= (logand byte #x80) 0)
+          do (loop-finish)
         finally (return (if (/= (logand byte #x40) 0)
                             (logior res (- (ash 1 (+ (* i 7) 7))))
                             res))))
