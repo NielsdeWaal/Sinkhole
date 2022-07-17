@@ -59,10 +59,12 @@
            make-memtable
            index
            prev-ts
+           val-count
            memtable-insert
            memtable-fullp
            print-object
            memtable-flush-to-byte-stream
+           memtable-load-from-byte-stream
            memtable-row
            make-memtable-row
            timestamp

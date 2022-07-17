@@ -86,8 +86,11 @@
 (defun memtable-fullp (memtable &key (limit 256))
   (>= (val-count memtable) limit))
 
-(defun memtable-flush-to-byte-stream (memtable)
-  (let ((stream (make-byte-stream 2048 (make-array 2048 :element-type 'unsigned-byte))))
+(defun memtable-flush-to-byte-stream (memtable &optional buf)
+  (let* ((stream-size (or (if (or buf) (length buf) 4096)))
+         (stream ;; (make-byte-stream 2048 (make-array 2048 :element-type 'unsigned-byte))
+                (make-byte-stream stream-size (or buf ;; (make-array 2048 :element-type 'unsigned-byte)
+                                           ))))
     (print (list :writing-to-stream (val-count memtable)))
     (write-sequence (coerce (leb128u-compress (val-count memtable)) 'vector) stream)
     (loop for pair in (storage memtable)
